@@ -47,7 +47,7 @@ class InvestmentTool:
     # async def analyze_investment_tool(financial_document_data):
     @tool("Analyze Investment Data")
    # TO:
-# TO:
+
     def analyze_investment_tool(financial_document_data: str) -> str:
         """Analyzes financial document data and returns structured investment insights."""
         processed_data = financial_document_data
