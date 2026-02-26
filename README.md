@@ -1,38 +1,78 @@
-# Financial Document Analyzer - Debug Assignment
+# Financial Document Analyzer
 
-## Project Overview
-A comprehensive financial document analysis system that processes corporate reports, financial statements, and investment documents using AI-powered analysis agents.
+A multi-agent AI system built with **CrewAI** and **FastAPI** that analyzes financial PDFs and provides document verification, financial analysis, investment insights, and risk assessment.
 
-## Getting Started
+---
 
-### Install Required Libraries
-```sh
-pip install -r requirement.txt
+## Bugs Fixed
+
+### Deterministic Bugs
+
+| # | File | Bug | Fix |
+|---|------|-----|-----|
+| 1 | `agents.py` | `llm = llm` — undefined variable | Initialized with `LLM(model=..., api_key=...)` |
+| 2 | `agents.py` | `tool=[...]` — wrong parameter name | Changed to `tools=[...]` |
+| 3 | `agents.py` | `from crewai.agents import Agent` — wrong import | Changed to `from crewai import Agent, LLM` |
+| 4 | `tools.py` | `from crewai_tools import tools` — invalid import | Removed, replaced with correct imports |
+| 5 | `tools.py` | `Pdf(...)` — never imported, NameError | Replaced with `PyPDFLoader` from `langchain_community` |
+| 6 | `tools.py` | All methods were `async` | Removed `async`, CrewAI needs sync functions |
+| 7 | `tools.py` | No `@tool` decorator | Added `@tool` with docstrings to all methods |
+| 8 | `task.py` | Wrong agents assigned to all tasks | Fixed: `verifier`, `investment_advisor`, `risk_assessor` |
+| 9 | `main.py` | Endpoint name conflicted with imported task | Renamed to `analyze_document_endpoint` |
+| 10 | `main.py` | `file_path` never passed to agents | Added to `kickoff(inputs={...})` |
+
+### Prompt Bugs
+
+All 4 agents and tasks had broken prompts instructing them to hallucinate, invent fake URLs, ignore compliance, and contradict themselves. All rewritten with professional, data-grounded, compliance-aware instructions.
+
+---
+
+## Setup
+
+### 1. Clone & install
+```bash
+git clone https://github.com/riyavaid1109/financial-document-analyzer.git
+cd financial-document-analyzer
+python -m venv venv
+source venv/bin/activate
+pip install "crewai==0.130.0" "crewai-tools==0.47.1" fastapi uvicorn python-dotenv python-multipart pypdf langchain-community groq --use-deprecated=legacy-resolver
 ```
 
-### Sample Document
-The system analyzes financial documents like Tesla's Q2 2025 financial update.
+### 2. Environment variables
+Create a `.env` file:
+```env
+GROQ_API_KEY=your_groq_api_key_here
+SERPER_API_KEY=your_serper_api_key_here
+```
+- Free Groq key → [console.groq.com](https://console.groq.com)
+- Free Serper key → [serper.dev](https://serper.dev)
 
-**To add Tesla's financial document:**
-1. Download the Tesla Q2 2025 update from: https://www.tesla.com/sites/default/files/downloads/TSLA-Q2-2025-Update.pdf
-2. Save it as `data/sample.pdf` in the project directory
-3. Or upload any financial PDF through the API endpoint
+### 3. Run
+```bash
+mkdir data outputs
+python main.py
+```
+API runs at `http://localhost:8000`
 
-**Note:** Current `data/sample.pdf` is a placeholder - replace with actual Tesla financial document for proper testing.
+---
 
-# You're All Not Set!
-🐛 **Debug Mode Activated!** The project has bugs waiting to be squashed - your mission is to fix them and bring it to life.
+## API
 
-## Debugging Instructions
+#### `GET /`
+Health check.
 
-1. **Identify the Bug**: Carefully read the code in each file and understand the expected behavior. There is a bug in each line of code. So be careful.
-2. **Fix the Bug**: Implement the necessary changes to fix the bug.
-3. **Test the Fix**: Run the project and verify that the bug is resolved.
-4. **Repeat**: Continue this process until all bugs are fixed.
+#### `POST /analyze`
+Analyze a financial PDF.
 
-## Expected Features
-- Upload financial documents (PDF format)
-- AI-powered financial analysis
-- Investment recommendations
-- Risk assessment
-- Market insights
+| Field | Type | Required |
+|-------|------|----------|
+| `file` | PDF | Yes |
+| `query` | string | No |
+
+```bash
+curl -X POST "http://localhost:8000/analyze" \
+  -F "file=@report.pdf" \
+  -F "query=Summarize the company's financial health"
+```
+
+Interactive docs → `http://localhost:8000/docs`
